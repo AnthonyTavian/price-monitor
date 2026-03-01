@@ -2,6 +2,10 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from app.models.product import Product
 from app.schemas import ProductCreate, ProductUpdate
+from app.services.scraping_service import scrape_amazon_price
+from app.services.price_history_service import create_price_history
+from app.schemas import PriceHistoryCreate
+import asyncio
 
 
 def create_product(db: Session, product: ProductCreate, user_id: int) -> Product:
@@ -9,7 +13,26 @@ def create_product(db: Session, product: ProductCreate, user_id: int) -> Product
     db.add(new_product)
     db.commit()
     db.refresh(new_product)
+
+    try:
+        loop = asyncio.new_event_loop()
+        data = loop.run_until_complete(scrape_amazon_price(new_product.url))
+        loop.close()
+        new_product.price = data["price"]
+        new_product.name = data["name"]
+        db.commit()
+
+        create_price_history(db, PriceHistoryCreate(
+            product_id=new_product.id,
+            price=data["price"]
+        ))
+
+        db.refresh(new_product)
+    except Exception as e:
+        print(f"Scraping failed: {e}")
+        raise e
     return new_product
+
 
 def get_products(
     db: Session,

@@ -7,7 +7,7 @@ class Product(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=True)
-    url = Column(String(255), nullable=False)
+    url = Column(String(2048), nullable=False)
     price = Column(Float, nullable=True)
     target_price = Column(Float, nullable=False)
     minor_price = Column(Float, nullable=True)
@@ -15,3 +15,4 @@ class Product(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     user = relationship("User", back_populates="products")
+    price_histories = relationship("PriceHistory", back_populates="product")
