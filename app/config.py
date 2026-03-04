@@ -11,5 +11,8 @@ class Settings(BaseSettings):
     APP_NAME: str = "Price Monitor"
     APP_VERSION: str = "1.0.0"
     ALLOWED_ORIGINS: str = "*"
+    TELEGRAM_TOKEN: str
+    TELEGRAM_CHAT_ID: str
+    CHECK_INTERVAL_HOURS: int = 6
 
 settings = Settings()
