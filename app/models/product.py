@@ -15,4 +15,4 @@ class Product(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     user = relationship("User", back_populates="products")
-    price_histories = relationship("PriceHistory", back_populates="product")
+    price_histories = relationship("PriceHistory", back_populates="product", cascade="all, delete-orphan")

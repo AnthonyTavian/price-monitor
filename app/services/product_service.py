@@ -10,6 +10,17 @@ import asyncio
 
 def create_product(db: Session, product: ProductCreate, user_id: int) -> Product:
     new_product = Product(**product.dict(), user_id=user_id)
+
+    if "amazon.com.br" not in new_product.url:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Amazon URL")
+    
+    if new_product.target_price <= 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Target price must be greater than zero")
+    
+    db_product = db.query(Product).filter(Product.url == new_product.url, Product.user_id == user_id).first()
+    if db_product:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Product with this URL already exists")
+
     db.add(new_product)
     db.commit()
     db.refresh(new_product)
@@ -30,7 +41,10 @@ def create_product(db: Session, product: ProductCreate, user_id: int) -> Product
         db.refresh(new_product)
     except Exception as e:
         print(f"Scraping failed: {e}")
-        raise e
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error scraping product data"
+        )
     return new_product
 
 
@@ -62,6 +76,10 @@ def update_product(product_id: int, product: ProductUpdate, db: Session, user_id
     db_product = db.query(Product).filter(Product.id == product_id, Product.user_id == user_id).first()
     if not db_product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
+    
+    if product.url and "amazon.com.br" not in product.url:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Amazon URL")
+    
     for key, value in product.dict(exclude_unset=True).items():
         setattr(db_product, key, value)
     db.commit()
