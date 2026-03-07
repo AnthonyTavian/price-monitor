@@ -39,3 +39,7 @@ Thumbs.db
 
 # Debug files
 debug.html
+
+
+# Test database
+test.db
